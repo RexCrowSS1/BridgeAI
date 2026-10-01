@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { checkHealth } from './healthApi'
+import { checkHealth } from '../api/healthApi'
 
 export function useHealthCheck() {
   const [busy, setBusy] = useState(false)

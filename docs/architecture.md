@@ -6,12 +6,10 @@ Bridge AI/
 ├── frontend/
 │   ├── public/               # Aset statis tanpa pemrosesan Vite
 │   ├── src/
-│   │   ├── app/App.jsx       # Komposisi aplikasi; provider/router nantinya
-│   │   ├── pages/            # Halaman utama
-│   │   ├── components/ui/    # Komponen presentasi yang dapat digunakan ulang
-│   │   ├── features/health/  # Hook dan API khusus pengecekan koneksi
-│   │   ├── lib/              # HTTP client dan utilitas lintas fitur
-│   │   ├── styles/           # Tailwind dan style global
+│   │   ├── app/              # App.jsx, routes.jsx, dan layouts/
+│   │   ├── pages/            # home/ dan not-found/: komposisi halaman
+│   │   ├── features/health/  # api/, hooks/, dan components/ milik fitur
+│   │   ├── shared/           # api/ dan styles/ lintas fitur
 │   │   └── main.jsx          # Entry point React
 │   ├── .env.example
 │   ├── jsconfig.json
@@ -36,13 +34,26 @@ Bridge AI/
 
 ## Menambahkan fitur
 
-Frontend: buat `src/features/<nama-fitur>/` untuk hook, API, dan komponen khusus fitur. Letakkan halaman di `pages/`; pindahkan komponen ke `components/ui/` hanya jika digunakan lintas fitur. Komponen React memakai `.jsx`, sedangkan utilitas dan hook memakai `.js`.
+Frontend: buat `src/features/<nama-fitur>/` dengan subfolder `api/`, `hooks/`, dan `components/` sesuai kebutuhan. Letakkan halaman di `pages/<nama-halaman>/`. Kode lintas fitur masuk ke `shared/`; komponen UI bersama dapat ditambahkan ke `shared/ui/` ketika dibutuhkan. Komponen React memakai `.jsx`, sedangkan utilitas dan hook memakai `.js`. Lihat [panduan frontend](../frontend/README.md) untuk struktur lengkap.
 
 Backend: buat route di `api/routes/`, definisikan kontrak data di `schemas/`, dan tempatkan logika di `services/`. Daftarkan router baru di `api/router.py`. Tambahkan tes pada `tests/`. Integrasi provider AI nantinya ditempatkan di `services/`, dengan kredensial di environment backend.
 
 Database: tambahkan file SQL baru dengan timestamp berurutan di `supabase/migrations/`; jangan mengubah migrasi yang sudah dijalankan. Aktifkan RLS dan kebijakan akses untuk setiap tabel baru.
 
-## Alur data
+## Routing frontend
+
+Routing menggunakan React Router melalui `react-router-dom`. `app/App.jsx` memasang `RouterProvider`, sedangkan `app/routes.jsx` membuat instance router satu kali di luar komponen menggunakan `createBrowserRouter` dengan pemetaan URL ke halaman:
+
+`MainLayout` di `app/layouts/MainLayout.jsx` menjadi parent route dan menyediakan container serta elemen `<main>` bersama. `Outlet` merender child route yang aktif. Halaman hanya berisi kontennya, sehingga tidak ada `<main>` bertingkat.
+
+- `/`: `HomePage` sebagai index route.
+- `*`: `NotFoundPage` untuk URL yang tidak dikenal, dengan tautan kembali ke beranda.
+
+Untuk menambah halaman, buat komponen JSX di `pages/<nama-halaman>/`, lalu import dan tambahkan objek `{ path: 'nama-halaman', element: <NamaHalaman /> }` ke array `children` milik `MainLayout` di `app/routes.jsx`. Gunakan `Link` atau `NavLink` dari `react-router-dom` untuk navigasi internal tanpa memuat ulang halaman. Route dapat dikembangkan dengan `children`, `loader`, dan `action` sesuai kebutuhan fitur.
+
+Saat deployment, konfigurasikan hosting frontend agar URL aplikasi yang bukan file statis diarahkan ke `index.html` (SPA fallback). Ini diperlukan agar membuka URL secara langsung atau melakukan refresh tetap menjalankan router. Jika frontend dan API memakai domain yang sama, kecualikan `/api` dari fallback. Vite sudah menyediakan fallback saat pengembangan lokal.
+
+## Alur request
 
 `Page → feature hook → feature API → API client → FastAPI route → service → Supabase`
 

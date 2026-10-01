@@ -1,4 +1,4 @@
-import { apiGet } from '../../lib/apiClient'
+import { apiGet } from '../../../shared/api/apiClient'
 
 export async function checkHealth(path) {
   try {
